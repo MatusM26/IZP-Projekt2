@@ -151,7 +151,7 @@ int start_border(Map *map, int r, int c, int leftright, int current_top, int cur
     bool has_top_border = is_border(map, r, c, 2);
 
     // Zjistíme, zda máme pravou hranici
-    bool has_right_border = is_border(map, r, c, 1);
+//    bool has_right_border = is_border(map, r, c, 1);
 
     // Zjistíme, zda máme levou hranici
     bool has_left_border = is_border(map, r, c, 0);
@@ -171,7 +171,7 @@ int start_border(Map *map, int r, int c, int leftright, int current_top, int cur
     }
 
         // Vracíme defaultní hodnotu
-    else return -1;
+    return -1;
 }
 
 void r_path(Map *map, int start_row, int start_col) {

@@ -70,8 +70,7 @@ bool is_border(Map *map, int r, int c, int border) {
             return false;
     }
 }
-
-int going_left(Map *map, int r, int c, int current_top) {
+int going_left_l(Map *map, int r, int c, int current_top) {
     bool has_top_border = is_border(map, r, c, 2);
     bool has_left_border = is_border(map, r, c, 0);
 
@@ -92,7 +91,7 @@ int going_left(Map *map, int r, int c, int current_top) {
     }
 }
 
-int going_right(Map *map, int r, int c, int current_top) {
+int going_right_l(Map *map, int r, int c, int current_top) {
     bool has_top_border = is_border(map, r, c, 2);
     bool has_right_border = is_border(map, r, c, 1);
 //    printf("%i\n", current_top);
@@ -114,7 +113,7 @@ int going_right(Map *map, int r, int c, int current_top) {
     }
 }
 
-int going_up(Map *map, int r, int c) {
+int going_up_l(Map *map, int r, int c) {
     bool has_right_border = is_border(map, r, c, 1);
     bool has_left_border = is_border(map, r, c, 0);
 
@@ -130,7 +129,78 @@ int going_up(Map *map, int r, int c) {
     }
 } //row++
 
-int going_down(Map *map, int r, int c) {
+int going_down_l(Map *map, int r, int c) {
+    bool has_right_border = is_border(map, r, c, 1);
+    bool has_left_border = is_border(map, r, c, 0);
+
+    if (!has_left_border)
+        return 0; //col--
+    else if (!has_right_border)
+        return 2; //col++
+    else
+        return 1; //row--
+}
+
+int going_left_r(Map *map, int r, int c, int current_top) {
+    bool has_top_border = is_border(map, r, c, 2);
+    bool has_left_border = is_border(map, r, c, 0);
+
+    if (current_top) {
+        if (!has_top_border)
+            return 1; //row--
+        else if (has_left_border)
+            return 2; //col++
+        else
+            return 0; //col--
+    } else {
+        if (!has_left_border)
+            return 0;
+        else if (!has_top_border)
+            return 3;
+        else
+            return 2;
+    }
+}
+
+int going_right_r(Map *map, int r, int c, int current_top) {
+    bool has_top_border = is_border(map, r, c, 2);
+    bool has_right_border = is_border(map, r, c, 1);
+//    printf("%i\n", current_top);
+    if (current_top) {
+
+        if (!has_right_border)
+            return 2; //col++
+        else if (!has_top_border)
+            return 1; //row--
+        else
+            return 0; //col--
+    } else {
+        if (!has_top_border)
+            return 3; //row++
+        else if (!has_right_border)
+            return 2; //col++
+        else
+            return 0; //col--
+    }
+}
+
+int going_up_r(Map *map, int r, int c) {
+    bool has_right_border = is_border(map, r, c, 1);
+    bool has_left_border = is_border(map, r, c, 0);
+
+    if (!has_right_border) {
+//        printf("col++\n");
+        return 2; //col++
+    } else if (!has_left_border) {
+        return 0; //col--
+//        printf("col--\n");
+    } else {
+//        printf("row++\n");
+        return 3;
+    }
+} //row++
+
+int going_down_r(Map *map, int r, int c) {
     bool has_right_border = is_border(map, r, c, 1);
     bool has_left_border = is_border(map, r, c, 0);
 
@@ -151,26 +221,47 @@ int start_border(Map *map, int r, int c, int leftright, int current_top, int cur
     bool has_top_border = is_border(map, r, c, 2);
 
     // Zjistíme, zda máme pravou hranici
-//    bool has_right_border = is_border(map, r, c, 1);
+    bool has_right_border = is_border(map, r, c, 1);
 
     // Zjistíme, zda máme levou hranici
     bool has_left_border = is_border(map, r, c, 0);
 
     // Nastavíme pravidla pro pravou a levou ruku
     if (leftright == 1) { // Pravá ruka
-        if ((c == 1 && !even_row && !has_left_border) || (c == 1 && even_row && !has_left_border)) {
-//            printf("right %i\n", going_right(map, current_row, current_col, current_top));
-            return going_right(map, current_row, current_col, current_top);
-        } else if (r == 1 && !even_row && !has_top_border) {
-//            printf("down %i\n", going_down(map, current_row, current_col));
-            return going_down(map, current_row, current_col);
+        if (c == 1 && !has_top_border) {
+            return going_down_r(map, current_row, current_col);
+        } else if (c == 1 && !has_left_border) {
+//            printf("right %i\n", going_right_r(map, current_row, current_col, current_top));
+            return going_right_r(map, current_row, current_col, current_top);
+        } else if (r == 1 && !has_top_border) {
+//            printf("down %i\n", going_down_r(map, current_row, current_col));
+            return going_down_r(map, current_row, current_col);
         } else if (map->rows == current_row && !current_top && !has_top_border) {
-//            printf("up %i\n", going_up(map, current_row, current_col));
-            return going_up(map, current_row, current_col);
+//            printf("up %i\n", going_up_r(map, current_row, current_col));
+            return going_up_r(map, current_row, current_col);
+        } else if (map->cols == current_col && !has_right_border){
+//            printf("left %i\n", going_left_r(map, current_row, current_col, current_top));
+            return going_left_r(map, current_row, current_col, current_top);
+        }
+    } else if (leftright == 0) {
+        if (c == 1 && !has_top_border) {
+            return going_down_r(map, current_row, current_col);
+        } else if (c == 1 && !has_left_border) {
+//            printf("right %i\n", going_right_r(map, current_row, current_col, current_top));
+            return going_right_r(map, current_row, current_col, current_top);
+        } else if (r == 1 && !has_top_border) {
+//            printf("down %i\n", going_down_r(map, current_row, current_col));
+            return going_down_r(map, current_row, current_col);
+        } else if (map->rows == current_row && !current_top && !has_top_border) {
+//            printf("up %i\n", going_up_r(map, current_row, current_col));
+            return going_up_r(map, current_row, current_col);
+        } else if (map->cols == current_col && !has_right_border){
+//            printf("left %i\n", going_left_r(map, current_row, current_col, current_top));
+            return going_left_r(map, current_row, current_col, current_top);
         }
     }
 
-        // Vracíme defaultní hodnotu
+    // Vracíme defaultní hodnotu
     return -1;
 }
 
@@ -184,6 +275,8 @@ void r_path(Map *map, int start_row, int start_col) {
     // Zjistíme, kterou hranici následovat podle pravidla levé ruky
     int next_border = start_border(map, current_row, current_col,
                                    1, current_top, current_col, current_row);
+
+//    printf("next: %i", next_border);
 
     // Hlavní smyčka pro hledání cesty
     while (!end) {
@@ -205,13 +298,13 @@ void r_path(Map *map, int start_row, int start_col) {
 //                printf("curtop0: %i\n", current_top);
                 current_top = top_bot(&current_col, &current_row);
 //                printf("curtop1: %i\n", current_top);
-                next_border = going_left(map, current_row, current_col, current_top);
+                next_border = going_left_r(map, current_row, current_col, current_top);
                 break;
             case 1:
                 if (current_row - 1 < 1)
                     end = true;
                 current_row--;
-                next_border = going_up(map, current_row, current_col);
+                next_border = going_up_r(map, current_row, current_col);
                 break;
             case 2:
                 if (current_col + 1 > map->cols) {
@@ -221,13 +314,13 @@ void r_path(Map *map, int start_row, int start_col) {
 //                printf("curtop0: %i\n", current_top);
                 current_top = top_bot(&current_col, &current_row);
 //                printf("curtop1: %i\n", current_top);
-                next_border = going_right(map, current_row, current_col, current_top);
+                next_border = going_right_r(map, current_row, current_col, current_top);
                 break;
             case 3:  // Nový case pro pohyb dopředu v řádku
                 if (current_row + 1 > map->rows)
                     end = true;
                 current_row++;
-                next_border = going_up(map, current_row, current_col);
+                next_border = going_down_r(map, current_row, current_col);
                 break;
             default:
                 return;  // Pokud není definována žádná hranice, ukončíme hledání

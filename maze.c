@@ -207,9 +207,9 @@ int start_border(Map *map, int r, int c, int leftright, int current_top, int cur
             return going_right_r(map, current_row, current_col, current_top);
         } else if (r == 0 && !has_top_border) {
             return going_down_r(map, current_row, current_col);
-        } else if (map->rows - 1 == current_row && !current_top && !has_top_border) {
+        } else if (map->rows == current_row && !current_top && !has_top_border) {
             return going_up_r(map, current_row, current_col);
-        } else if (map->cols - 1 == current_col && !has_right_border) {
+        } else if (map->cols == current_col && !has_right_border) {
             return going_left_r(map, current_row, current_col, current_top);
         }
     } else if (leftright == 0) {
@@ -219,9 +219,9 @@ int start_border(Map *map, int r, int c, int leftright, int current_top, int cur
             return going_right_r(map, current_row, current_col, current_top);
         } else if (r == 0 && !has_top_border) {
             return going_down_r(map, current_row, current_col);
-        } else if (map->rows - 1 == current_row && !current_top && !has_top_border) {
+        } else if (map->rows == current_row && !current_top && !has_top_border) {
             return going_up_r(map, current_row, current_col);
-        } else if (map->cols - 1 == current_col && !has_right_border) {
+        } else if (map->cols == current_col && !has_right_border) {
             return going_left_r(map, current_row, current_col, current_top);
         }
     }
@@ -315,16 +315,15 @@ void l_path(Map *map, int start_row, int start_col) {
             case 2:
                 if (current_col + 1 >= map->cols) {
                     end = true;
-                } else if (current_col < map->cols)
-                    current_col++;
+                }
+                current_col++;
                 current_top = top_bot(&current_col, &current_row);
                 next_border = going_right_l(map, current_row, current_col, current_top);
                 break;
             case 3:
                 if (current_row + 1 >= map->rows)
                     end = true;
-                else if (current_row < map->rows)
-                    current_row++;
+                current_row++;
                 next_border = going_down_l(map, current_row, current_col);
                 break;
             default:

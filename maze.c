@@ -354,7 +354,7 @@ bool test_walls(Map *map) {
 
 bool test_values(Map *map) {
     for (int i = 0; i < map->rows * map->cols; i++) {
-        if (map->cells[i] > 7) {
+        if (map->cells[i] > 7 || map->cells[i] < 0) {
             return false;
         }
     }

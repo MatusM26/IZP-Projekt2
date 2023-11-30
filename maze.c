@@ -9,12 +9,6 @@ typedef struct {
     unsigned char *cells;
 } Map;
 
-void initializeMap(Map *map, int rows, int cols) {
-    map->rows = rows;
-    map->cols = cols;
-    map->cells = (unsigned char *) malloc(rows * cols * sizeof(unsigned char));
-}
-
 void freeMap(Map *map) {
     free(map->cells);
 }
@@ -27,10 +21,10 @@ void loadMap(Map *map, const char *filename) {
     }
 
     fscanf(file, "%d %d", &map->rows, &map->cols);
-    initializeMap(map, map->rows, map->cols);
+    map->cells = (unsigned char *) malloc(map->rows * map->cols * sizeof(unsigned char));
 
-    for (int i = 1; i <= map->rows; ++i) {
-        for (int j = 1; j <= map->cols; ++j) {
+    for (int i = 0; i < map->rows; i++) {
+        for (int j = 0; j < map->cols; j++) {
             fscanf(file, "%hhu", &map->cells[i * map->cols + j]);
         }
     }
@@ -39,14 +33,19 @@ void loadMap(Map *map, const char *filename) {
 }
 
 int top_bot(int *col, int *row) {
-    if ((*row % 2 == 0 && *col % 2 == 0) || (*row % 2 != 0 && *col % 2 != 0))
+    if ((*row % 2 == 0 && *col % 2 == 0) || (*row % 2 != 0 && *col % 2 != 0)) {
         return 1;
-    else if ((*row % 2 == 0 && *col % 2 != 0) || (*row % 2 != 0 && *col % 2 == 0))
+    } else if ((*row % 2 == 0 && *col % 2 != 0) || (*row % 2 != 0 && *col % 2 == 0)) {
         return 0;
-    else return -1;
+    } else return -1;
 }
 
 bool is_border(Map *map, int r, int c, int border) {
+    if (r < 0 || r >= map->rows || c < 0 || c >= map->cols) {
+        fprintf(stderr, "[Error] Invalid indices: row %d, col %d\n", r, c);
+        return -1;
+    }
+
     unsigned char cellType = map->cells[r * map->cols + c];
     switch (border) {
         case 0:
@@ -56,7 +55,7 @@ bool is_border(Map *map, int r, int c, int border) {
         case 2:
             return (cellType & 4) != 0;
         default:
-            return false;
+            return -1;
     }
 }
 
@@ -202,11 +201,11 @@ int start_border(Map *map, int r, int c, int leftright, int current_top, int cur
     bool has_left_border = is_border(map, r, c, 0);
 
     if (leftright == 1) {
-        if (c == 1 && !has_top_border) {
+        if (c == 0 && !has_top_border) {
             return going_down_r(map, current_row, current_col);
-        } else if (c == 1 && !has_left_border) {
+        } else if (c == 0 && !has_left_border) {
             return going_right_r(map, current_row, current_col, current_top);
-        } else if (r == 1 && !has_top_border) {
+        } else if (r == 0 && !has_top_border) {
             return going_down_r(map, current_row, current_col);
         } else if (map->rows == current_row && !current_top && !has_top_border) {
             return going_up_r(map, current_row, current_col);
@@ -214,11 +213,11 @@ int start_border(Map *map, int r, int c, int leftright, int current_top, int cur
             return going_left_r(map, current_row, current_col, current_top);
         }
     } else if (leftright == 0) {
-        if (c == 1 && !has_top_border) {
+        if (c == 0 && !has_top_border) {
             return going_down_r(map, current_row, current_col);
-        } else if (c == 1 && !has_left_border) {
+        } else if (c == 0 && !has_left_border) {
             return going_right_r(map, current_row, current_col, current_top);
-        } else if (r == 1 && !has_top_border) {
+        } else if (r == 0 && !has_top_border) {
             return going_down_r(map, current_row, current_col);
         } else if (map->rows == current_row && !current_top && !has_top_border) {
             return going_up_r(map, current_row, current_col);
@@ -240,35 +239,40 @@ void r_path(Map *map, int start_row, int start_col) {
 
     while (!end) {
         current_top = top_bot(&current_col, &current_row);
-
-        printf("%d,%d\n", current_row, current_col);
+        printf("%d,%d\n", current_row + 1, current_col + 1);
 
         switch (next_border) {
             case 0:
-                if (current_col - 1 < 1)
+                if (current_col - 1 < 0)
                     end = true;
-                current_col--;
+
+                if (current_col > 0)
+                    current_col--;
                 current_top = top_bot(&current_col, &current_row);
                 next_border = going_left_r(map, current_row, current_col, current_top);
                 break;
             case 1:
-                if (current_row - 1 < 1)
+                if (current_row - 1 < 0)
                     end = true;
-                current_row--;
+
+                if (current_row > 0)
+                    current_row--;
                 next_border = going_up_r(map, current_row, current_col);
                 break;
             case 2:
-                if (current_col + 1 > map->cols) {
+                if (current_col + 1 >= map->cols) {
                     end = true;
                 }
-                current_col++;
+                if (current_col + 1 < map->cols)
+                    current_col++;
                 current_top = top_bot(&current_col, &current_row);
                 next_border = going_right_r(map, current_row, current_col, current_top);
                 break;
             case 3:
-                if (current_row + 1 > map->rows)
+                if (current_row + 1 >= map->rows)
                     end = true;
-                current_row++;
+                if (current_row + 1 < map->rows)
+                    current_row++;
                 next_border = going_down_r(map, current_row, current_col);
                 break;
             default:
@@ -279,35 +283,37 @@ void r_path(Map *map, int start_row, int start_col) {
 
 void l_path(Map *map, int start_row, int start_col) {
     bool end = false;
-    int current_row = start_row;
-    int current_col = start_col;
-    int current_top;
+    int current_row = start_row, current_col = start_col, current_top;
 
     current_top = top_bot(&current_col, &current_row);
-
     int next_border = start_border(map, current_row, current_col,
-                                   0, current_top, current_col, current_row);
+                                   1, current_top, current_col, current_row);
 
     while (!end) {
+        \
         current_top = top_bot(&current_col, &current_row);
-        printf("%d,%d\n", current_row, current_col);
+        printf("%d,%d\n", current_row + 1, current_col + 1);
 
         switch (next_border) {
             case 0:
-                if (current_col - 1 < 1)
+                if (current_col - 1 < 0)
                     end = true;
-                current_col--;
+                if (current_col > 0)
+                    current_col--;
                 current_top = top_bot(&current_col, &current_row);
                 next_border = going_left_l(map, current_row, current_col, current_top);
                 break;
             case 1:
-                if (current_row - 1 < 1)
+                if (current_row - 1 < 0)
                     end = true;
-                current_row--;
+
+                if (current_row > 0)
+                    current_row--;
+
                 next_border = going_up_l(map, current_row, current_col);
                 break;
             case 2:
-                if (current_col + 1 > map->cols) {
+                if (current_col + 1 >= map->cols) {
                     end = true;
                 }
                 current_col++;
@@ -315,7 +321,7 @@ void l_path(Map *map, int start_row, int start_col) {
                 next_border = going_right_l(map, current_row, current_col, current_top);
                 break;
             case 3:
-                if (current_row + 1 > map->rows)
+                if (current_row + 1 >= map->rows)
                     end = true;
                 current_row++;
                 next_border = going_down_l(map, current_row, current_col);
@@ -326,20 +332,56 @@ void l_path(Map *map, int start_row, int start_col) {
     }
 }
 
+bool testmaze_common(Map *map) {
+    char left, right;
+
+    for (int t = 0; t < map->rows; t++) {
+        for (int i = 1; i < map->cols; i++) {
+            left = map->cells[(map->cols * t + i) - 1]
+                    >> 1;
+            right = map->cells[(map->cols * t + i)];
+
+            left = left % 2;
+            right = right % 2;
+
+            if (left != right)
+                return false;
+        }
+    }
+    return true;
+}
+
+bool testmaze_values(Map *map) {
+    for (int i = 0; i < map->rows * map->cols; i++) {
+        if (map->cells[i] > 7) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main(int argc, char *argv[]) {
-    if (argc == 5) {
+    if (argc == 3) {
+        Map maze;
+        loadMap(&maze, argv[2]);
+        if ((strcmp(argv[1], "--test") == 0) && argc == 3) {
+            if (testmaze_common(&maze) == true && testmaze_values(&maze) == true)
+                printf("Valid\n");
+            else
+                printf("Invalid\n");
+        }
+        freeMap(&maze);
+    } else if (argc == 5) {
         Map maze;
         loadMap(&maze, argv[4]);
 
         int start_row = atoi(argv[2]);
         int start_col = atoi(argv[3]);
-
+        start_row--;
+        start_col--;
         if (strcmp(argv[1], "--rpath") == 0) {
-
             r_path(&maze, start_row, start_col);
         } else if (strcmp(argv[1], "--lpath") == 0) {
-
-            printf("[Kontrola]Pravidlo lavej ruky\n");
             l_path(&maze, start_row, start_col);
         } else {
             fprintf(stderr, "[Error] Nespravny format vstupu\n");

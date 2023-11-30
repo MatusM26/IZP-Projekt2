@@ -333,26 +333,26 @@ void l_path(Map *map, int start_row, int start_col) {
     }
 }
 
-bool test_walls(Map *map) {
-    char currentCell, nextCell;
+bool testmaze_common(Map *map) {
+    char left, right;
 
     for (int t = 0; t < map->rows; t++) {
         for (int i = 1; i < map->cols; i++) {
-            currentCell = map->cells[(map->cols * t + i) - 1]
+            left = map->cells[(map->cols * t + i) - 1]
                     >> 1;
-            nextCell = map->cells[(map->cols * t + i)];
+            right = map->cells[(map->cols * t + i)];
 
-            currentCell = currentCell % 2;
-            nextCell = nextCell % 2;
+            left = left % 2;
+            right = right % 2;
 
-            if (currentCell != nextCell)
+            if (left != right)
                 return false;
         }
     }
     return true;
 }
 
-bool test_values(Map *map) {
+bool testmaze_values(Map *map) {
     for (int i = 0; i < map->rows * map->cols; i++) {
         if (map->cells[i] > 7) {
             return false;
@@ -362,21 +362,15 @@ bool test_values(Map *map) {
 }
 
 int main(int argc, char *argv[]) {
-    if ((strcmp(argv[1], "--help") == 0) && argc == 2) {
-        printf("--test: Test validity bludiska\n"
-               "--rpath [x] [y] [bludiste.txt]: Hladanie vychodu z blodiska pomocou metody pravej ruky. "
-               "[x] [y] su suradnice vchodu do bludiska, [bludiste.txt] je subor s bludiskom\n"
-               "--lpath [x] [y] [bludiste.txt]: Hladanie vychodu z blodiska pomocou metody pravej ruky. "
-               "[x] [y] su suradnice vchodu do bludiska, [bludiste.txt] je subor s bludiskom\n");
-
-        return 0;
-    } else if ((strcmp(argv[1], "--test") == 0) && argc == 3) {
+    if (argc == 3) {
         Map maze;
         loadMap(&maze, argv[2]);
-        if (test_walls(&maze) == true && test_values(&maze) == true)
-            printf("Valid\n");
-        else
-            printf("Invalid\n");
+        if ((strcmp(argv[1], "--test") == 0) && argc == 3) {
+            if (testmaze_common(&maze) == true && testmaze_values(&maze) == true)
+                printf("Valid\n");
+            else
+                printf("Invalid\n");
+        }
         freeMap(&maze);
     } else if (argc == 5) {
         Map maze;
@@ -396,7 +390,9 @@ int main(int argc, char *argv[]) {
         }
 
         freeMap(&maze);
-    } else {
+    }
+
+    if (argc < 3) {
         fprintf(stderr, "[Error] Nespravny format vstupu\n");
         return 1;
     }
